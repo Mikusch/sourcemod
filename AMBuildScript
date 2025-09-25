@@ -667,6 +667,7 @@ else:
     'extensions/clientprefs/AMBuilder',
     'extensions/curl/AMBuilder',
     'extensions/cstrike/AMBuilder',
+    'extensions/utlvector/AMBuilder',
     'extensions/dhooks/AMBuilder',
     'extensions/geoip/AMBuilder',
     'extensions/mysql/AMBuilder',

@@ -1,0 +1,27 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os
+
+# Only build for specific SDKs
+allowed_sdks = ['tf2', 'hl2dm', 'css', 'sdk2013']
+
+for sdk_name in SM.sdks:
+  if sdk_name not in allowed_sdks:
+    continue
+
+  sdk = SM.sdks[sdk_name]
+
+  for cxx in builder.targets:
+    if not cxx.target.arch in sdk['platforms'][cxx.target.platform]:
+      continue
+
+    binary = SM.HL2Library(builder, cxx, 'utlvector.ext.' + sdk['extension'], sdk)
+    binary.sources += [
+      'extension.cpp',
+      'utlvectorwrapper.cpp',
+      'natives.cpp',
+      '../../public/smsdk_ext.cpp',
+    ]
+
+    binary.compiler.defines += ['META_NO_HL2SDK']
+
+    SM.extensions += [builder.Add(binary)]
