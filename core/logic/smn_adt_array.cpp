@@ -729,6 +729,90 @@ static cell_t FindValueInArray(IPluginContext *pContext, const cell_t *params)
 	return -1;
 }
 
+static cell_t FindArrayInArray(IPluginContext *pContext, const cell_t *params)
+{
+	CellArray *array;
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), g_pCoreIdent);
+
+	if ((err = handlesys->ReadHandle(params[1], htCellArray, &sec, (void **)&array))
+		!= HandleError_None)
+	{
+		return pContext->ThrowNativeError("Invalid Handle %x (error: %d)", params[1], err);
+	}
+
+	int blocksize = (int)array->blocksize();
+
+	int needleLength = params[3];
+	if (needleLength <= 0)
+	{
+		return pContext->ThrowNativeError("Invalid needle length %d (must be > 0)", needleLength);
+	}
+
+	int start = params[4];
+	if (start < 0 || start >= blocksize)
+	{
+		return pContext->ThrowNativeError("Invalid start %d (blocksize: %d)", start, blocksize);
+	}
+
+	int limit = params[5];
+	if (limit == 0)
+	{
+		limit = needleLength;
+	}
+	else if (limit == -1)
+	{
+		limit = blocksize - start;
+	}
+	else if (limit < 0)
+	{
+		return pContext->ThrowNativeError("Invalid limit %d (must be >= -1)", limit);
+	}
+
+	if (limit > blocksize - start)
+	{
+		return pContext->ThrowNativeError("Invalid limit %d (max: %d)", limit, blocksize - start);
+	}
+
+	if (needleLength > limit)
+	{
+		return pContext->ThrowNativeError("Invalid needle length %d (max: %d)", needleLength, limit);
+	}
+
+	cell_t *needle;
+	pContext->LocalToPhysAddr(params[2], &needle);
+
+	for (size_t i = 0; i < array->size(); i++)
+	{
+		cell_t *blk = array->at(i) + start;
+
+		// Loop the needle as many times as needed, truncating the final pass
+		int matched = 0;
+		while (matched < limit)
+		{
+			int chunk = limit - matched;
+			if (chunk > needleLength)
+			{
+				chunk = needleLength;
+			}
+
+			if (memcmp(&blk[matched], needle, chunk * sizeof(cell_t)) != 0)
+			{
+				break;
+			}
+
+			matched += chunk;
+		}
+
+		if (matched == limit)
+		{
+			return (cell_t)i;
+		}
+	}
+
+	return -1;
+}
+
 static cell_t GetArrayBlockSize(IPluginContext *pContext, const cell_t *params)
 {
 	CellArray *array;
@@ -765,6 +849,7 @@ REGISTER_NATIVES(cellArrayNatives)
 	{"CloneArray",					CloneArray},
 	{"FindStringInArray",			FindStringInArray},
 	{"FindValueInArray",			FindValueInArray},
+	{"FindArrayInArray",			FindArrayInArray},
 	{"GetArrayBlockSize",			GetArrayBlockSize},
 
 	// Transitional syntax support.
@@ -787,6 +872,7 @@ REGISTER_NATIVES(cellArrayNatives)
 	{"ArrayList.Clone",				CloneArray},
 	{"ArrayList.FindString",		FindStringInArray},
 	{"ArrayList.FindValue",			FindValueInArray},
+	{"ArrayList.FindArray",			FindArrayInArray},
 	{"ArrayList.BlockSize.get",		GetArrayBlockSize},
 
 	{NULL,							NULL},

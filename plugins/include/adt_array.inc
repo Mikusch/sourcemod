@@ -230,6 +230,26 @@ methodmap ArrayList < Handle {
 	// @error               Invalid block, or invalid start index.
 	public native int FindValue(any item, int block=0, int start=-1, bool reverse=false);
 
+	// Returns the index for the first block containing the provided cells. If
+	// the cells cannot be located, -1 will be returned.
+	//
+	// The needle is repeated as many times as needed to cover limit cells,
+	// truncating on the final pass, so a short needle can match a longer range.
+	//
+	// @param needle        Cells to search for.
+	// @param needleLength  Number of cells in the needle.
+	// @param start         Cell offset within each block to start matching at.
+	//                      Valid numbers are in the interval [0..BlockSize-1].
+	// @param limit         Number of cells of each block to match against, with
+	//                      -1 for all remaining cells in the block and 0 for the
+	//                      length of the needle. The effective value may not be
+	//                      smaller than needleLength, nor larger than
+	//                      BlockSize-start.
+	// @return              Array index, or -1 on failure.
+	// @error               Invalid needle length, invalid start offset, or
+	//                      invalid limit.
+	public native int FindArray(const any[] needle, int needleLength, int start=0, int limit=0);
+
 	// Sort an ADT Array. Specify the type as Integer, Float, or String.
 	//
 	// @param order         Sort order to use, same as other sorts.
@@ -489,6 +509,29 @@ native int FindStringInArray(Handle array, const char[] item, int block=0);
  * @error               Invalid Handle or invalid block
  */
 native int FindValueInArray(Handle array, any item, int block=0);
+
+/**
+ * Returns the index for the first block containing the provided cells. If the
+ * cells cannot be located, -1 will be returned.
+ *
+ * The needle is repeated as many times as needed to cover limit cells,
+ * truncating on the final pass, so a short needle can match a longer range.
+ *
+ * @param array         Array Handle.
+ * @param needle        Cells to search for.
+ * @param needleLength  Number of cells in the needle.
+ * @param start         Cell offset within each block to start matching at.
+ *                      Valid numbers are in the interval [0..blocksize-1].
+ * @param limit         Number of cells of each block to match against, with -1
+ *                      for all remaining cells in the block and 0 for the
+ *                      length of the needle. The effective value may not be
+ *                      smaller than needleLength, nor larger than
+ *                      blocksize-start.
+ * @return              Array index, or -1 on failure.
+ * @error               Invalid Handle, invalid needle length, invalid start
+ *                      offset, or invalid limit.
+ */
+native int FindArrayInArray(Handle array, const any[] needle, int needleLength, int start=0, int limit=0);
 
 /**
  * Returns the blocksize the array was created with.
